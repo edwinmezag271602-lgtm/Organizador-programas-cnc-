@@ -111,6 +111,7 @@ body {
 .fila.atrasado { border-left-color: var(--rojo); }
 .fila.proximo { border-left-color: var(--ambar); }
 .fila.a-tiempo { border-left-color: var(--verde); }
+.fila.sin-fecha { border-left-color: var(--gris); border-left-style: dashed; }
 .fila.estado-ok { opacity: 0.6; }
 .fila.estado-cancelada { opacity: 0.5; text-decoration: line-through; }
 .fila.estado-cancelada .dato, .fila.estado-cancelada .desc { text-decoration: none; }

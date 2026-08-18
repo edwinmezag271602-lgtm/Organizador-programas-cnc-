@@ -1,15 +1,39 @@
 // importer.js — Lee los dos Excel diarios (SheetJS), reemplaza el contenido
 // del día en Supabase, y actualiza el seguimiento manual (estado/observaciones).
 
+// Convierte el serial de fecha de Excel (días desde 1899-12-30) a Date.
+function fechaDesdeSerialExcel(serial) {
+  const ms = Math.round((serial - 25569) * 86400 * 1000); // 25569 = días hasta 1970-01-01
+  const d = new Date(ms);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 function parseFechaDDMMYYYY(value) {
   if (value === null || value === undefined || value === "" || value === "-") return null;
-  if (value instanceof Date) return value.toISOString();
+
+  // Celda de fecha real de Excel: con cellDates:true llega como Date directo.
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value.toISOString();
+
+  // Por si alguna celda numérica de fecha se coló como número crudo (serial de Excel).
+  if (typeof value === "number") {
+    const d = fechaDesdeSerialExcel(value);
+    return d ? d.toISOString() : null;
+  }
+
   const str = String(value).trim();
+
+  // Formato esperado del reporte: dd/mm/yyyy[ HH:mm]
   const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
-  if (!m) return null;
-  const [, dd, mm, yyyy, hh = "0", min = "0"] = m;
-  const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min));
-  return isNaN(d.getTime()) ? null : d.toISOString();
+  if (m) {
+    const [, dd, mm, yyyy, hh = "0", min = "0"] = m;
+    const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min));
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+
+  // Último recurso: dejar que el motor de fechas del navegador intente
+  // interpretar otros formatos (ISO, m/d/yyyy, etc.) antes de rendirse.
+  const generico = new Date(str);
+  return isNaN(generico.getTime()) ? null : generico.toISOString();
 }
 
 function toBool(value) {
@@ -26,9 +50,13 @@ function textOrNull(value) {
 
 async function readSheetRows(file) {
   const buf = await file.arrayBuffer();
-  const wb = XLSX.read(buf, { type: "array" });
+  // cellDates: true + raw: true hace que las celdas de fecha reales de Excel
+  // lleguen como objetos Date (sin pasar por un formato de texto que puede
+  // variar según el idioma/formato regional del reporte), evitando que una
+  // fecha válida se pierda por no calzar con el patrón dd/mm/yyyy esperado.
+  const wb = XLSX.read(buf, { type: "array", cellDates: true });
   const ws = wb.Sheets[wb.SheetNames[0]];
-  return XLSX.utils.sheet_to_json(ws, { defval: null, raw: false });
+  return XLSX.utils.sheet_to_json(ws, { defval: null, raw: true });
 }
 
 async function parseTareasExternas(file) {

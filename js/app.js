@@ -68,26 +68,31 @@ function calcularCola(externas, pendientes, seguimientoPorOs) {
       observaciones: seguimiento.observaciones ?? "",
     };
 
+    // "Sin cruce" es únicamente cuando no aparece NINGUNA fila de fabricación
+    // para esa OS. Si sí hay fila(s) pero no se pudo leer la fecha, igual va
+    // a la cola principal (con la fecha marcada como "no reconocida") en vez
+    // de perderse como si no existiera el cruce.
     if (!matches || matches.length === 0) {
       sinCruce.push({ ...base, maquinas: [], partes: [] });
       continue;
     }
+
     const fechasValidas = matches.map((m) => m.inicio).filter(Boolean).sort();
     const fechaFabricacion = fechasValidas[0] ? new Date(fechasValidas[0]) : null;
-    if (!fechaFabricacion) {
-      sinCruce.push({ ...base, maquinas: [], partes: [] });
-      continue;
+
+    let readyBy = null;
+    let startDate = null;
+    let urgencia = "sin-fecha";
+    if (fechaFabricacion) {
+      ({ readyBy, startDate } = Scheduler.calcularInicioProgramacion(fechaFabricacion, {
+        leadHours: 36,
+        workHours: 8,
+      }));
+      const now = new Date();
+      urgencia = "a-tiempo";
+      if (startDate && startDate <= now) urgencia = "atrasado";
+      else if (startDate && startDate - now <= 24 * 3600 * 1000) urgencia = "proximo";
     }
-
-    const { readyBy, startDate } = Scheduler.calcularInicioProgramacion(fechaFabricacion, {
-      leadHours: 36,
-      workHours: 8,
-    });
-
-    const now = new Date();
-    let urgencia = "a-tiempo";
-    if (startDate && startDate <= now) urgencia = "atrasado";
-    else if (startDate && startDate - now <= 24 * 3600 * 1000) urgencia = "proximo";
 
     cola.push({
       ...base,
@@ -109,6 +114,7 @@ function badgeUrgencia(u) {
     atrasado: ["Atrasado", "badge-rojo"],
     proximo: ["Próximo (<24h)", "badge-ambar"],
     "a-tiempo": ["A tiempo", "badge-verde"],
+    "sin-fecha": ["Fecha no reconocida", "badge-gris"],
   };
   const [label, cls] = map[u] ?? ["—", ""];
   return `<span class="badge ${cls}">${label}</span>`;
