@@ -41,6 +41,14 @@
     <select id="filtro-maquina">
       <option value="todas">Todas las máquinas</option>
     </select>
+    <select id="filtro-estado">
+      <option value="activos">Activos (en cola / en espera)</option>
+      <option value="todas">Todos los estados</option>
+      <option value="en-cola">En cola</option>
+      <option value="en-espera">En espera</option>
+      <option value="ok">OK</option>
+      <option value="cancelada">Cancelada</option>
+    </select>
   </section>
 
   <div class="barra-estado">
@@ -48,12 +56,12 @@
     <span id="estado-carga" class="estado-texto"></span>
   </div>
 
-  <main id="cola" class="cola-grid"></main>
+  <main id="cola" class="lista"></main>
 
   <section class="sin-cruce-section">
     <details>
       <summary>Sin cruce con fabricación (<span id="sin-cruce-count">0</span>)</summary>
-      <div id="sin-cruce" class="cola-grid"></div>
+      <div id="sin-cruce" class="lista"></div>
     </details>
   </section>
 
@@ -61,6 +69,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
   <script src="js/config.js" defer></script>
   <script src="js/supabaseClient.js" defer></script>
+  <script src="js/reglas.js" defer></script>
   <script src="js/scheduler.js" defer></script>
   <script src="js/importer.js" defer></script>
   <script src="js/app.js" defer></script>

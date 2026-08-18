@@ -1,4 +1,5 @@
-// importer.js — Lee los dos Excel diarios (SheetJS) y los sube a Supabase.
+// importer.js — Lee los dos Excel diarios (SheetJS), reemplaza el contenido
+// del día en Supabase, y actualiza el seguimiento manual (estado/observaciones).
 
 function parseFechaDDMMYYYY(value) {
   if (value === null || value === undefined || value === "" || value === "-") return null;
@@ -81,24 +82,70 @@ async function parseTareasPendientes(file) {
     }));
 }
 
-async function upsertEnLotes(table, rows, onConflict, lote = 500) {
+async function insertEnLotes(table, rows, lote = 500) {
   for (let i = 0; i < rows.length; i += lote) {
     const chunk = rows.slice(i, i + lote);
-    const { error } = await window.supabaseClient.from(table).upsert(chunk, { onConflict });
+    const { error } = await window.supabaseClient.from(table).insert(chunk);
     if (error) throw error;
   }
 }
 
+// Reemplaza por completo el contenido de una tabla (el Excel diario es la
+// foto vigente: lo que no está en el archivo nuevo ya no aplica).
+async function reemplazarTabla(table, rows) {
+  const { error: delError } = await window.supabaseClient.from(table).delete().not("id", "is", null);
+  if (delError) throw delError;
+  if (rows.length) await insertEnLotes(table, rows);
+}
+
+function osConAlistar(rows) {
+  return new Set(
+    rows.filter((r) => r.descripcion && window.Reglas.DESC_ALISTAR.test(r.descripcion) && r.os).map((r) => r.os)
+  );
+}
+
 async function importarTareasExternas(file) {
   const rows = await parseTareasExternas(file);
-  await upsertEnLotes("tareas_externas", rows, "tarea,os");
-  return rows.length;
+
+  const { data: previas, error: eLeer } = await window.supabaseClient
+    .from("tareas_externas")
+    .select("descripcion, os");
+  if (eLeer) throw eLeer;
+  const osAnteriores = osConAlistar(previas ?? []);
+
+  await reemplazarTabla("tareas_externas", rows);
+
+  const osNuevas = osConAlistar(rows);
+
+  // OS que ya no aparecen en el cargue de hoy: se entiende que la actividad
+  // se realizó (el programa "se hizo solo") si aún no estaba en un estado final.
+  const desaparecidas = [...osAnteriores].filter((os) => !osNuevas.has(os));
+  if (desaparecidas.length) {
+    const { error: eUpdate } = await window.supabaseClient
+      .from("seguimiento_requerimientos")
+      .update({ estado: "ok", actualizado_en: new Date().toISOString() })
+      .in("os", desaparecidas)
+      .in("estado", ["en-cola", "en-espera"]);
+    if (eUpdate) throw eUpdate;
+  }
+
+  // Asegura que exista un registro de seguimiento para cada OS activa hoy,
+  // sin pisar el estado/observaciones de las que ya se venían siguiendo.
+  if (osNuevas.size) {
+    const nuevosRegistros = [...osNuevas].map((os) => ({ os }));
+    const { error: eUpsert } = await window.supabaseClient
+      .from("seguimiento_requerimientos")
+      .upsert(nuevosRegistros, { onConflict: "os", ignoreDuplicates: true });
+    if (eUpsert) throw eUpsert;
+  }
+
+  return { total: rows.length, autoCompletadas: desaparecidas.length };
 }
 
 async function importarTareasPendientes(file) {
   const rows = await parseTareasPendientes(file);
-  await upsertEnLotes("tareas_pendientes", rows, "tarea");
-  return rows.length;
+  await reemplazarTabla("tareas_pendientes", rows);
+  return { total: rows.length };
 }
 
 window.Importer = { importarTareasExternas, importarTareasPendientes };

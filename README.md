@@ -25,10 +25,37 @@ la app calcula:
    - Turno noche: lunes a jueves 20:00–05:30 (cena 01:00–02:00), viernes
      20:00–05:00 (cena 01:00–02:00).
 
-Los requerimientos se muestran en una cola ordenada por urgencia (rojo =
-atrasado, ámbar = debe iniciar en menos de 24h, verde = a tiempo), con
-filtros por texto, máquina y urgencia. El diseño es responsivo (celular,
-tablet, escritorio).
+Los requerimientos se muestran en una **lista** (no tablero tipo kanban)
+ordenada por urgencia (rojo = atrasado, ámbar = debe iniciar en menos de
+24h, verde = a tiempo), con filtros por texto, máquina, urgencia y estado.
+El diseño es responsivo (celular, tablet, escritorio).
+
+### Seguimiento manual por OS
+
+Cada fila tiene:
+
+- **Estado**: `En cola` (por defecto), `OK` (ya se hizo), `Cancelada` (ya no
+  se requiere), `En espera` (falta algo adicional). Se guarda de inmediato
+  en la tabla `seguimiento_requerimientos`, independiente de lo que traiga
+  el Excel.
+- **Observaciones**: campo de texto libre, se guarda automáticamente
+  (con un pequeño debounce) al escribir.
+
+### Comportamiento al cargar el Excel del día
+
+Cada carga de "Listado de tareas externas" **reemplaza por completo** el
+contenido de `tareas_externas` (y "Tareas pendientes de ejecución" reemplaza
+`tareas_pendientes`) — el Excel del día es la foto vigente.
+
+Antes de reemplazar, la app compara las OS que estaban activas contra las
+que trae el nuevo archivo:
+
+- Si una OS **ya no aparece** en el nuevo Excel y su estado seguía siendo
+  `En cola` o `En espera`, se marca automáticamente como **`OK`**
+  (se entiende que la actividad se realizó y el programa "se hizo solo").
+- Las **observaciones nunca se borran** en este proceso, sin importar el
+  estado.
+- Una OS ya marcada `OK` o `Cancelada` manualmente no se toca.
 
 ## Configuración de Supabase
 
