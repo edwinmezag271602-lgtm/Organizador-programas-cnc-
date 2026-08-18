@@ -4,17 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Organizador de Programas CNC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
   <header class="topbar">
-    <h1>Organizador de Programas CNC</h1>
-    <button id="btn-recargar" class="btn-secundario">Recargar</button>
+    <div class="topbar-titulo">
+      <span class="topbar-icono">⚙️</span>
+      <div>
+        <h1>Organizador de Programas CNC</h1>
+        <p class="topbar-subtitulo">Cola de elaboración de programas según cercanía de fabricación</p>
+      </div>
+    </div>
+    <button id="btn-recargar" class="btn-secundario">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" /></svg>
+      Recargar
+    </button>
   </header>
 
   <section class="panel-carga">
     <details>
-      <summary>Cargar Excel diarios</summary>
+      <summary>📥 Cargar Excel diarios</summary>
       <form id="form-carga" class="form-carga">
         <label>
           Listado de tareas externas (.xlsx)
@@ -31,13 +43,16 @@
   </section>
 
   <section class="filtros">
-    <input type="search" id="filtro-texto" placeholder="Buscar OS, componente, parte…" />
+    <div class="campo-busqueda">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+      <input type="search" id="filtro-texto" placeholder="Buscar OS, componente, parte…" />
+    </div>
     <select id="filtro-urgencia">
       <option value="todas">Todas las urgencias</option>
-      <option value="atrasado">Atrasado</option>
-      <option value="proximo">Próximo (&lt;24h)</option>
-      <option value="a-tiempo">A tiempo</option>
-      <option value="sin-fecha">Fecha no reconocida</option>
+      <option value="atrasado">🔴 Atrasado</option>
+      <option value="proximo">🟠 Próximo (&lt;24h)</option>
+      <option value="a-tiempo">🟢 A tiempo</option>
+      <option value="sin-fecha">⚪ Fecha no reconocida</option>
     </select>
     <select id="filtro-maquina">
       <option value="todas">Todas las máquinas</option>
@@ -61,7 +76,7 @@
 
   <section class="sin-cruce-section">
     <details>
-      <summary>Sin cruce con fabricación (<span id="sin-cruce-count">0</span>)</summary>
+      <summary>🔍 Sin cruce con fabricación (<span id="sin-cruce-count">0</span>)</summary>
       <div id="sin-cruce" class="lista"></div>
     </details>
   </section>
