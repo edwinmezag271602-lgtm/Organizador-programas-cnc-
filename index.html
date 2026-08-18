@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Organizador de Programas CNC</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>Organizador de Programas CNC</h1>
+    <button id="btn-recargar" class="btn-secundario">Recargar</button>
+  </header>
+
+  <section class="panel-carga">
+    <details>
+      <summary>Cargar Excel diarios</summary>
+      <form id="form-carga" class="form-carga">
+        <label>
+          Listado de tareas externas (.xlsx)
+          <input type="file" id="file-externas" accept=".xlsx,.xls" />
+        </label>
+        <label>
+          Tareas pendientes de ejecución (.xlsx)
+          <input type="file" id="file-pendientes" accept=".xlsx,.xls" />
+        </label>
+        <button type="submit" class="btn-primario">Importar</button>
+        <span id="estado-import" class="estado-texto"></span>
+      </form>
+    </details>
+  </section>
+
+  <section class="filtros">
+    <input type="search" id="filtro-texto" placeholder="Buscar OS, componente, parte…" />
+    <select id="filtro-urgencia">
+      <option value="todas">Todas las urgencias</option>
+      <option value="atrasado">Atrasado</option>
+      <option value="proximo">Próximo (&lt;24h)</option>
+      <option value="a-tiempo">A tiempo</option>
+    </select>
+    <select id="filtro-maquina">
+      <option value="todas">Todas las máquinas</option>
+    </select>
+  </section>
+
+  <div class="barra-estado">
+    <span id="resumen"></span>
+    <span id="estado-carga" class="estado-texto"></span>
+  </div>
+
+  <main id="cola" class="cola-grid"></main>
+
+  <section class="sin-cruce-section">
+    <details>
+      <summary>Sin cruce con fabricación (<span id="sin-cruce-count">0</span>)</summary>
+      <div id="sin-cruce" class="cola-grid"></div>
+    </details>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+  <script src="js/config.js" defer></script>
+  <script src="js/supabaseClient.js" defer></script>
+  <script src="js/scheduler.js" defer></script>
+  <script src="js/importer.js" defer></script>
+  <script src="js/app.js" defer></script>
+</body>
+</html>
